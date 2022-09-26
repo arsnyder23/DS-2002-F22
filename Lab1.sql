@@ -1,79 +1,91 @@
 -- ------------------------------------------------------------------
 -- 0). First, How Many Rows are in the Products Table?
 -- ------------------------------------------------------------------
-SELECT COUNT(*) FROM northwind.products AS rowcount;
-SELECT * FROM northwind.products;
+SELECT COUNT(*) AS ProductCount FROM northwind.products;
+
 -- ------------------------------------------------------------------
 -- 1). Product Name and Unit/Quantity
 -- ------------------------------------------------------------------
-SELECT product_name, quantity_per_unit FROM northwind.products;
+SELECT product_name , quantity_per_unit
+FROM northwind.products;
 
 -- ------------------------------------------------------------------
 -- 2). Product ID and Name of Current Products
 -- ------------------------------------------------------------------
-SELECT id, product_name FROM northwind.products WHERE discontinued=0;
+SELECT id AS product_id , product_name
+FROM northwind.products
+WHERE discontinued = 0;
 
 -- ------------------------------------------------------------------
 -- 3). Product ID and Name of Discontinued Products
 -- ------------------------------------------------------------------
-SELECT id, product_name FROM northwind.products WHERE discontinued!=0;
-
+SELECT id AS product_id , product_name
+FROM northwind.products
+WHERE discontinued > 0;
 
 -- ------------------------------------------------------------------
 -- 4). Name & List Price of Most & Least Expensive Products
 -- ------------------------------------------------------------------
-SELECT product_name, list_price 
-FROM northwind.products AS o1
-	WHERE list_price =
-    (SELECT MIN(list_price)
-    FROM northwind.products);
-SELECT product_name, list_price 
-FROM northwind.products AS o2
-	WHERE list_price =
-    (SELECT MAX(list_price)
-    FROM northwind.products);
+SELECT product_name , list_price
+FROM northwind.products
+WHERE list_price <= (SELECT MIN(list_price) FROM northwind.products)
+OR list_price >= (SELECT MAX(list_price) FROM northwind.products) ORDER BY list_price;
+
 -- ------------------------------------------------------------------
 -- 5). Product ID, Name & List Price Costing Less Than $20
 -- ------------------------------------------------------------------
-SELECT id, product_name, list_price FROM northwind.products
-WHERE list_price<20;
+SELECT id AS product_id , product_name , list_price
+FROM northwind.products
+WHERE list_price < 20.00
+ORDER BY list_price DESC;
 
 -- ------------------------------------------------------------------
 -- 6). Product ID, Name & List Price Costing Between $15 and $20
 -- ------------------------------------------------------------------
-SELECT id, product_name, list_price FROM northwind.products
-WHERE list_price BETWEEN 15 AND 20;
+SELECT id AS product_id , product_name , list_price
+FROM northwind.products
+WHERE list_price BETWEEN 15.00 AND 20.00
+ORDER BY list_price DESC;
 
-
+-- older (equivalent) syntax--
+-- SELECT id AS product_id , product_name , list_price
+-- FROM northwind.products
+-- ORDER BY list_price DESC;
 -- ------------------------------------------------------------------
 -- 7). Product Name & List Price Costing Above Average List Price
 -- ------------------------------------------------------------------
-SELECT product_name, list_price FROM northwind.products WHERE list_price>standard_cost;
+SELECT product_name , list_price
+FROM northwind.products
+WHERE list_price > (SELECT AVG(list_price) FROM northwind.products)
+ORDER BY list_price DESC;
 
 -- ------------------------------------------------------------------
 -- 8). Product Name & List Price of 10 Most Expensive Products 
 -- ------------------------------------------------------------------
-SELECT product_name, list_price FROM northwind.products 
-ORDER BY list_price DESC LIMIT 10;
-
+SELECT product_name , list_price
+FROM northwind.products
+ORDER BY list_price DESC
+LIMIT 10;
 
 -- ------------------------------------------------------------------ 
 -- 9). Count of Current and Discontinued Products 
 -- ------------------------------------------------------------------
-SELECT COUNT(*) AS current_count
-FROM northwind.products WHERE discontinued=0;
 
-SELECT COUNT(*) AS current_count
-FROM northwind.products WHERE discontinued!=0;
+SELECT COUNT(*) AS count_discontinued
+FROM northwind.products
+WHERE discontinued > 0;
+SELECT COUNT(*) AS count_not_discontinued
+FROM northwind.products
+WHERE discontinued = 0;
 
 -- ------------------------------------------------------------------
 -- 10). Product Name, Units on Order and Units in Stock
 --      Where Quantity In-Stock is Less Than the Quantity On-Order. 
 -- ------------------------------------------------------------------
-SELECT northwind.products.product_name, 
-northwind.order_details.quantity AS units_on_order;
 
-
+SELECT product_name , reorder_level AS units_in_stock , target_level AS units_on_order
+FROM northwind.products
+WHERE reorder_level < target_level;
 
 -- ------------------------------------------------------------------
 -- EXTRA CREDIT -----------------------------------------------------
@@ -83,14 +95,25 @@ northwind.order_details.quantity AS units_on_order;
 -- ------------------------------------------------------------------
 -- 11). Products with Supplier Company & Address Info
 -- ------------------------------------------------------------------
+SELECT p.product_name , p.list_price AS product_list_price , p.category AS product_category , s.company AS supplier_company, s.address AS supplier_address , s.city AS supplier_city , s.state_province AS supplier_state_province , s.zip_postal_code AS supplier_zip_postal_code
 
+FROM northwind.suppliers s
+INNER JOIN northwind.products p
+On s.id = p.supplier_ids;
 
 -- ------------------------------------------------------------------
 -- 12). Number of Products per Category With Less Than 5 Units
 -- ------------------------------------------------------------------
-
+SELECT category , COUNT(*) as units_in_stock
+FROM northwind.products
+GROUP BY category
+HAVING units_in_stock < 5;
 
 
 -- ------------------------------------------------------------------
 -- 13). Number of Products per Category Priced Less Than $20.00
 -- ------------------------------------------------------------------
+SELECT category , COUNT(*) AS count_below_twenty
+FROM northwind.products
+WHERE list_price < 20.00
+GROUP BY category;
